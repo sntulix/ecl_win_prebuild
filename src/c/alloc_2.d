@@ -302,7 +302,6 @@ static struct GC_ms_entry *
 cl_object_mark_proc(void *addr, struct GC_ms_entry *msp, struct GC_ms_entry *msl,
                     GC_word env)
 {
-#if 1
         cl_type t = ((cl_object)addr)->d.t;
         if (ecl_likely(t > t_start && t < t_end)) {
                 struct ecl_type_information *info = type_info + t;
@@ -320,201 +319,6 @@ cl_object_mark_proc(void *addr, struct GC_ms_entry *msp, struct GC_ms_entry *msl
                         }
                 }
         }
-#else
-#define MAYBE_MARK2(ptr) {                                              \
-                GC_word aux = (GC_word)(ptr);                           \
-                if (!(aux & 2) && \
-                    aux >= (GC_word)GC_least_plausible_heap_addr &&     \
-                    aux <= (GC_word)GC_greatest_plausible_heap_addr)    \
-                        msp = GC_mark_and_push((void*)aux, msp, msl, (void*)o); \
-        }
-#define MAYBE_MARK(ptr) {                                               \
-                GC_word aux = (GC_word)(ptr);                           \
-                if (!(aux & 2) && \
-                    aux >= (GC_word)lpa &&      \
-                    aux <= (GC_word)gpa)        \
-                        msp = GC_mark_and_push((void*)aux, msp, msl, (void*)o); \
-        }
-        cl_object o = (cl_object)addr;
-        const GC_word lpa = (GC_word)GC_least_plausible_heap_addr;
-        const GC_word gpa = (GC_word)GC_greatest_plausible_heap_addr;
-        switch (o->d.t) {
-        case t_bignum:
-                MAYBE_MARK(ECL_BIGNUN_LIMBS(o));
-                break;
-        case t_ratio:
-                MAYBE_MARK(o->ratio.num);
-                MAYBE_MARK(o->ratio.den);
-                break;
-        case t_complex:
-                MAYBE_MARK(o->complex.real);
-                MAYBE_MARK(o->complex.imag);
-                break;
-        case t_symbol:
-                MAYBE_MARK(o->symbol.hpack);
-                MAYBE_MARK(o->symbol.name);
-                MAYBE_MARK(o->symbol.plist);
-                MAYBE_MARK(o->symbol.gfdef);
-                MAYBE_MARK(o->symbol.value);
-                break;
-        case t_package:
-                MAYBE_MARK(o->pack.external);
-                MAYBE_MARK(o->pack.internal);
-                MAYBE_MARK(o->pack.usedby);
-                MAYBE_MARK(o->pack.uses);
-                MAYBE_MARK(o->pack.shadowings);
-                MAYBE_MARK(o->pack.nicknames);
-                MAYBE_MARK(o->pack.name);
-                break;
-        case t_hashtable:
-                MAYBE_MARK(o->hash.threshold);
-                MAYBE_MARK(o->hash.rehash_size);
-                MAYBE_MARK(o->hash.data);
-                break;
-        case t_array:
-                MAYBE_MARK(o->array.dims);
-        case t_vector:
-# ifdef ECL_UNICODE
-        case t_string:
-# endif
-        case t_base_string:
-        case t_bitvector:
-                MAYBE_MARK(o->vector.self.t);
-                MAYBE_MARK(o->vector.displaced);
-                break;
-        case t_stream:
-                MAYBE_MARK(o->stream.format_table);
-                MAYBE_MARK(o->stream.format);
-                MAYBE_MARK(o->stream.buffer);
-                MAYBE_MARK(o->stream.byte_stack);
-                MAYBE_MARK(o->stream.object1);
-                MAYBE_MARK(o->stream.object0);
-                MAYBE_MARK(o->stream.ops);
-                break;
-       case t_random:
-                MAYBE_MARK(o->random.value);
-                break;
-      case t_readtable:
-# ifdef ECL_UNICODE
-                MAYBE_MARK(o->readtable.hash);
-# endif
-                MAYBE_MARK(o->readtable.table);
-                break;
-        case t_pathname:
-                MAYBE_MARK(o->pathname.version);
-                MAYBE_MARK(o->pathname.type);
-                MAYBE_MARK(o->pathname.name);
-                MAYBE_MARK(o->pathname.directory);
-                MAYBE_MARK(o->pathname.device);
-                MAYBE_MARK(o->pathname.host);
-                break;
-        case t_bytecodes:
-                MAYBE_MARK(o->bytecodes.file_position);
-                MAYBE_MARK(o->bytecodes.file);
-                MAYBE_MARK(o->bytecodes.data);
-                MAYBE_MARK(o->bytecodes.code);
-                MAYBE_MARK(o->bytecodes.definition);
-                MAYBE_MARK(o->bytecodes.name);
-                break;
-        case t_bclosure:
-                MAYBE_MARK(o->bclosure.lex);
-                MAYBE_MARK(o->bclosure.code);
-                break;
-        case t_cfun:
-                MAYBE_MARK(o->cfun.file_position);
-                MAYBE_MARK(o->cfun.file);
-                MAYBE_MARK(o->cfun.block);
-                MAYBE_MARK(o->cfun.name);
-                break;
-        case t_cfunfixed:
-                MAYBE_MARK(o->cfunfixed.file_position);
-                MAYBE_MARK(o->cfunfixed.file);
-                MAYBE_MARK(o->cfunfixed.block);
-                MAYBE_MARK(o->cfunfixed.name);
-                break;
-        case t_cclosure:
-                MAYBE_MARK(o->cclosure.file_position);
-                MAYBE_MARK(o->cclosure.file);
-                MAYBE_MARK(o->cclosure.block);
-                MAYBE_MARK(o->cclosure.env);
-                break;
-        case t_instance:
-                MAYBE_MARK(o->instance.slots);
-                MAYBE_MARK(o->instance.sig);
-                MAYBE_MARK(o->instance.clas);
-                break;
-# ifdef ECL_THREADS
-        case t_process:
-                MAYBE_MARK(o->process.queue_record);
-                MAYBE_MARK(o->process.start_spinlock);
-                MAYBE_MARK(o->process.woken_up);
-                MAYBE_MARK(o->process.exit_values);
-                MAYBE_MARK(o->process.exit_barrier);
-                MAYBE_MARK(o->process.parent);
-                MAYBE_MARK(o->process.initial_bindings);
-                MAYBE_MARK(o->process.interrupt);
-                MAYBE_MARK(o->process.args);
-                MAYBE_MARK(o->process.function);
-                MAYBE_MARK(o->process.name);
-                if (o->process.env && o->process.env != ECL_NIL)
-                        ecl_mark_env(o->process.env);
-                break;
-        case t_lock:
-                MAYBE_MARK(o->lock.queue_list);
-                MAYBE_MARK(o->lock.queue_spinlock);
-                MAYBE_MARK(o->lock.owner);
-                MAYBE_MARK(o->lock.name);
-                break;
-        case t_condition_variable:
-                MAYBE_MARK(o->condition_variable.queue_spinlock);
-                MAYBE_MARK(o->condition_variable.queue_list);
-                MAYBE_MARK(o->condition_variable.lock);
-                break;
-        case t_rwlock:
-                MAYBE_MARK(o->rwlock.name);
-#  ifndef ECL_RWLOCK
-                MAYBE_MARK(o->rwlock.mutex);
-                break;
-#  endif
-        case t_semaphore:
-                MAYBE_MARK(o->semaphore.queue_list);
-                MAYBE_MARK(o->semaphore.queue_spinlock);
-                MAYBE_MARK(o->semaphore.name);
-                break;
-        case t_barrier:
-                MAYBE_MARK(o->barrier.queue_list);
-                MAYBE_MARK(o->barrier.queue_spinlock);
-                MAYBE_MARK(o->barrier.name);
-                break;
-        case t_mailbox:
-                MAYBE_MARK(o->mailbox.data);
-                MAYBE_MARK(o->mailbox.name);
-                MAYBE_MARK(o->mailbox.reader_semaphore);
-                MAYBE_MARK(o->mailbox.writer_semaphore);
-                break;
-# endif
-        case t_codeblock:
-                MAYBE_MARK(o->cblock.error);
-                MAYBE_MARK(o->cblock.source);
-                MAYBE_MARK(o->cblock.links);
-                MAYBE_MARK(o->cblock.name);
-                MAYBE_MARK(o->cblock.next);
-                MAYBE_MARK(o->cblock.temp_data);
-                MAYBE_MARK(o->cblock.data);
-                break;
-        case t_foreign:
-                MAYBE_MARK(o->foreign.tag);
-                MAYBE_MARK(o->foreign.data);
-                break;
-        case t_frame:
-                MAYBE_MARK(o->frame.env);
-                MAYBE_MARK(o->frame.base);
-                MAYBE_MARK(o->frame.stack);
-                break;
-        default:
-                break;
-        }
-#endif
         return msp;
 }
 
@@ -783,9 +587,7 @@ init_alloc(void)
         GC_set_time_limit(GC_TIME_UNLIMITED);
         GC_init();
 #ifdef ECL_THREADS
-# if GC_VERSION_MAJOR > 7 || GC_VERSION_MINOR > 1
         GC_allow_register_threads();
-# endif
 #endif
         if (ecl_option_values[ECL_OPT_INCREMENTAL_GC]) {
                 GC_enable_incremental();
@@ -1280,7 +1082,6 @@ gather_statistics()
 static void
 ecl_mark_env(struct cl_env_struct *env)
 {
-#if 1
         if (env->stack) {
                 GC_push_conditional((void *)env->stack, (void *)env->stack_top, 1);
                 GC_set_mark_bit((void *)env->stack);
@@ -1293,7 +1094,7 @@ ecl_mark_env(struct cl_env_struct *env)
                 GC_push_conditional((void *)env->bds_org, (void *)(env->bds_top+1), 1);
                 GC_set_mark_bit((void *)env->bds_org);
         }
-#endif
+
         /*memset(env->values[env->nvalues], 0, (64-env->nvalues)*sizeof(cl_object));*/
 #if defined(ECL_THREADS) && !defined(ECL_USE_MPROTECT) && !defined(ECL_USE_GUARD_PAGE)
         /* When using threads, "env" is a pointer to memory allocated by ECL. */
