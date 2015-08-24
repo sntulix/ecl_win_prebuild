@@ -82,6 +82,9 @@
 #include <ecl/cons.h>
 #include <ecl/stacks.h>
 #include <ecl/number.h>
+#ifdef ECL_LWP
+#include <ecl/lwp.h>
+#endif
 #ifdef LOCATIVE
 #include <ecl/unify.h>
 #endif
