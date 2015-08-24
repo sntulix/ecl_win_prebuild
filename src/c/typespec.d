@@ -156,6 +156,12 @@ ecl_type_to_symbol(cl_type t)
         case t_cfunfixed:
         case t_cclosure:
                 return @'compiled-function';
+#ifdef ECL_LWP
+        case t_cont:
+                return @'ext::cont';
+        case t_thread:
+                return @'ext::thread';
+#endif
 #ifdef ECL_THREADS
         case t_process:
                 return @'mp::process';

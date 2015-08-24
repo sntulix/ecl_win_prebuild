@@ -272,6 +272,11 @@ enum ecl_built_in_classes {
         ECL_BUILTIN_FOREIGN_DATA,
         ECL_BUILTIN_FRAME,
         ECL_BUILTIN_WEAK_POINTER
+#ifdef ECL_LWP
+        ,
+        ECL_BUILTIN_CONTINUATION,
+        ECL_BUILTIN_THREAD
+#endif
 #ifdef ECL_THREADS
         ,
         ECL_BUILTIN_PROCESS,
@@ -366,6 +371,12 @@ cl_class_of(cl_object x)
         case t_cfunfixed:
         case t_cclosure:
                 index = ECL_BUILTIN_FUNCTION; break;
+#ifdef ECL_LWP                  /* XXX */
+        case t_cont:
+                index = ECL_BUILTIN_CONTINUATION; break;
+        case t_thread:
+                index = ECL_BUILTIN_THREAD; break;
+#endif
 #ifdef ECL_THREADS
         case t_process:
                 index = ECL_BUILTIN_PROCESS; break;

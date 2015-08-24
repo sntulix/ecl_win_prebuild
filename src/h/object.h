@@ -74,6 +74,10 @@ typedef enum {
         t_cclosure,
         t_instance,
         t_structure = t_instance,
+#ifdef ECL_LWP
+        t_cont,
+        t_thread,
+#endif
 #ifdef ECL_THREADS
         t_process,
         t_lock,
@@ -847,6 +851,18 @@ struct ecl_dummy {
         _ECL_HDR;
 };
 
+#ifdef ECL_LWP
+struct ecl_cont {
+        _ECL_HDR2(resumed, timed_out);
+        cl_object thread;
+};
+
+struct ecl_thread {
+        _ECL_HDR;
+        cl_object  cont;           /* its continuation */
+};
+#endif /* ECL_LWP */
+
 #ifdef ECL_THREADS
 enum {
         ECL_PROCESS_INACTIVE = 0,
@@ -1036,6 +1052,10 @@ union cl_lispunion {
         struct ecl_cclosure     cclosure;       /*  compiled closure  */
         struct ecl_dummy        d;              /*  dummy  */
         struct ecl_instance     instance;       /*  clos instance */
+#ifdef ECL_LWP
+        struct ecl_cont         cont;           /* continuation */
+        struct ecl_thread       thread;         /* thread  */
+#endif
 #ifdef ECL_THREADS
         struct ecl_process      process;        /*  process  */
         struct ecl_queue        queue;          /*  queue  */

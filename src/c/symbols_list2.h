@@ -1531,6 +1531,9 @@ cl_symbols[] = {
 #endif /* !GBC_BOEHM */
 
 #ifdef ECL_LWP
+{EXT_ "CONT",NULL},
+{EXT_ "THREAD",NULL},
+
 {EXT_ "MAKE-THREAD",NULL},
 {EXT_ "DEACTIVATE",NULL},
 {EXT_ "REACTIVATE",NULL},

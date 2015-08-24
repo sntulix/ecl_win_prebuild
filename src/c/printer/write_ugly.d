@@ -347,6 +347,20 @@ write_weak_pointer(cl_object x, cl_object stream)
         _ecl_write_unreadable(x, "weak-pointer", ECL_NIL, stream);
 }
 
+#ifdef ECL_LWP
+static void
+write_cont(cl_object x, cl_object stream)
+{
+        _ecl_write_unreadable(x, "continuation", ECL_NIL, stream);
+}
+
+static void
+write_thread(cl_object x, cl_object stream)
+{
+        _ecl_write_unreadable(x, "thread", ECL_NIL, stream);
+}
+#endif
+
 #ifdef ECL_THREADS
 static void
 write_process(cl_object x, cl_object stream)
@@ -430,6 +444,8 @@ static printer dispatch[FREE+1] = {
         write_cfun, /* t_cfunfixed */
         write_cclosure, /* t_cclosure */
         write_instance, /* t_instance */
+        write_cont,     /* t_cont */
+        write_thread,   /* t_thread */
 #ifdef ECL_THREADS
         write_process, /* t_process */
         write_lock, /* t_lock */
