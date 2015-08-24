@@ -920,6 +920,13 @@ extern ECL_API cl_object si_load_source(cl_object file, cl_object verbose, cl_ob
 extern ECL_API cl_object si_load_binary(cl_object file, cl_object verbose, cl_object print, cl_object format);
 extern ECL_API cl_object cl_load _ECL_ARGS((cl_narg narg, cl_object pathname, ...));
 
+
+/* lwp.c */
+
+extern ECL_API cl_object si_make_thread(cl_object fun);
+extern ECL_API cl_object si_make_continuation(cl_object thread);
+
+
 /* macros.c */
 
 extern ECL_API cl_object cl_macroexpand _ECL_ARGS((cl_narg narg, cl_object form, ...));
