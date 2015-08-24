@@ -381,6 +381,14 @@ ONCE_MORE:
         case t_spice:
           break;
 */
+#ifdef ECL_LWP
+	case t_cont:
+	  obj->cont.thread = OBJNULL;
+	  break;
+	case t_thread:
+	  obj->thread.entry = OBJNULL;
+	  break;
+#endif
 #ifdef ECL_THREADS
         case t_process:
           obj->process.name = OBJNULL;
@@ -428,6 +436,9 @@ ONCE_MORE:
           printf("\ttype = %d\n", t);
           ecl_internal_error("alloc botch.");
         }
+#ifdef ECL_LWP
+	clwp->lwp_alloc_temporary = obj;
+#endif
         ecl_enable_interrupts();
         return(obj);
 CALL_GC:
@@ -741,6 +752,10 @@ init_alloc(void)
         init_tm(t_cclosure, "cCCLOSURE", sizeof(struct ecl_cclosure), 1);
         init_tm(t_instance, "IINSTANCE", sizeof(struct ecl_instance), 32);
         init_tm(t_foreign, "LFOREIGN", sizeof(struct ecl_foreign), 1);
+#ifdef ECL_LWP
+	init_tm(t_cont, "?CONT", sizeof(struct ecl_cont), 2);
+	init_tm(t_thread, "tTHREAD", sizeof(struct ecl_thread), 2);
+#endif
 #ifdef ECL_THREADS
         init_tm(t_process, "tPROCESS", sizeof(struct ecl_process), 2);
         init_tm(t_lock, "tLOCK", sizeof(struct ecl_lock), 2);

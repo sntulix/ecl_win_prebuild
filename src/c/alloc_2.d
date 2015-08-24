@@ -393,6 +393,10 @@ ecl_alloc_object(cl_type t)
         case t_cfunfixed:
         case t_cclosure:
         case t_instance:
+#ifdef ECL_LWP
+        case t_cont:
+        case t_thread:
+#endif
 #ifdef ECL_THREADS
         case t_process:
         case t_lock:
@@ -666,6 +670,10 @@ init_alloc(void)
         init_tm(t_cfunfixed, "CFUNFIXED", sizeof(struct ecl_cfunfixed), -1);
         init_tm(t_cclosure, "CCLOSURE", sizeof(struct ecl_cclosure), -1);
         init_tm(t_instance, "INSTANCE", sizeof(struct ecl_instance), 4);
+#ifdef ECL_LWP                  /* XXX */
+        init_tm(t_cont, "CONT", sizeof(struct ecl_cont), 2);
+	init_tm(t_thread, "THREAD", sizeof(struct ecl_thread), 2);
+#endif
 #ifdef ECL_THREADS
         init_tm(t_process, "PROCESS", sizeof(struct ecl_process), 8);
         init_tm(t_lock, "LOCK", sizeof(struct ecl_lock), 2);
@@ -787,6 +795,10 @@ init_alloc(void)
                 to_bitmap(&o, &(o.instance.clas)) |
                 to_bitmap(&o, &(o.instance.sig)) |
                 to_bitmap(&o, &(o.instance.slots));
+# ifdef ECL_LWP                 /* XXX */
+        type_info[t_cont].descriptor   = 0;
+        type_info[t_thread].descriptor = 0;
+# endif
 # ifdef ECL_THREADS
         type_info[t_process].descriptor =
                 to_bitmap(&o, &(o.process.name)) |

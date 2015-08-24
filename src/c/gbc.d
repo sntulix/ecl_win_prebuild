@@ -361,7 +361,17 @@ BEGIN:
                 mark_object(x->cfun.block);
                 mark_next(x->cclosure.env);
                 break;
-
+#ifdef ECL_LWP
+	case t_cont:
+                /* XXX */
+		mark_next(x->cont.thread);
+		break;
+	case t_thread:
+                /* Already marked by malloc */
+                /* mark_contblock(x->thread.data, x->thread.size); */
+                mark_next(x->thread.cont);
+		/* mark_next(x->thread.entry); */
+#endif
 #ifdef ECL_THREADS
         case t_process:
 /* Already marked by malloc: x->process.env

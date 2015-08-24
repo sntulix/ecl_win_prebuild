@@ -353,7 +353,7 @@ BEGIN:
                 mark_object(x->cclosure.env);
                 break;
 
-#ifdef THREADS
+#ifdef ECL_LWP
         case t_cont:
                 mark_next(x->cn.cn_thread);
                 break;
@@ -364,7 +364,7 @@ BEGIN:
  */
                 mark_next(x->thread.entry);
                 break;
-#endif THREADS
+#endif ECL_LWP
         case t_instance:
                 mark_object(x->instance.class);
                 p = x->instance.slots;
@@ -442,7 +442,7 @@ mark_phase(void)
         mark_object(ECL_NIL);
         mark_object(ECL_T);
 
-#ifdef THREADS
+#ifdef ECL_LWP
         {
           pd *pdp;
           lpd *old_clwp = clwp;
@@ -450,8 +450,8 @@ mark_phase(void)
           for (pdp = running_head; pdp != (pd *)NULL; pdp = pdp->pd_next) {
 
             clwp = pdp->pd_lpd;
-#endif THREADS
-            
+#endif ECL_LWP
+
             for (i=0; i<NValues; i++)
               mark_object(VALUES(i));
 
@@ -459,12 +459,12 @@ mark_phase(void)
               mark_object(bdp->bds_sym);
               mark_object(bdp->bds_val);
             }
-            
+
             for (frp = frs_org;  frp <= frs_top;  frp++) {
               mark_object(frp->frs_val);
               mark_object(frp->frs_lex);
             }
-            
+
             for (ihsp = ihs_org;  ihsp <= ihs_top;  ihsp++) {
               mark_object(ihsp->ihs_function);
               mark_object(ihsp->ihs_base);
@@ -472,7 +472,7 @@ mark_phase(void)
 
             mark_object(lex_env);
 
-#ifdef THREADS        
+#ifdef ECL_LWP
             /* added to mark newly allocated objects */
             mark_object(clwp->lwp_alloc_temporary);
             mark_object(clwp->lwp_fmt_temporary_stream);
@@ -485,17 +485,15 @@ mark_phase(void)
             /* (current-thread) can return it at any time
              */
             mark_object(clwp->lwp_thread);
-#endif THREADS        
-            
+#endif ECL_LWP
             /* now collect from the c-stack of the thread ... */
-            
             { int *where;
               volatile jmp_buf buf;
 
               /* ensure flushing of register caches */
               if (ecl_setjmp(buf) == 0) ecl_longjmp(buf, 1);
 
-#ifdef THREADS
+#ifdef ECL_LWP
               if (clwp != old_clwp) /* is not the executing stack */
 # ifdef __linux
                 where = (int *)pdp->pd_env[0].__jmpbuf[0].__sp;
@@ -503,23 +501,22 @@ mark_phase(void)
                 where = (int *)pdp->pd_env[JB_SP];
 # endif
               else
-#endif THREADS
+#endif ECL_LWP
                 where = (int *)&where ;
-              
               /* If the locals of type object in a C function could be
                  aligned other than on multiples of sizeof (char *)
                  we would have to mark twice */
-              
+
               if (where > cs_org)
                 mark_stack_conservative(where, cs_org);
               else
                 mark_stack_conservative(cs_org, where);
             }
-#ifdef THREADS
+#ifdef ECL_LWP
           }
           clwp = old_clwp;
         }
-#endif THREADS
+#endif ECL_LWP
 
         /* mark roots */
         for (i = 0; i < gc_roots;  i++)
@@ -614,7 +611,7 @@ contblock_sweep_phase(void)
                 for (j = i+1;
                      j < maxpage && type_map[j] == (int)t_contiguous;
                      j++)
-                        ;       
+                        ;
                 s = pagetochar(i);
                 e = pagetochar(j);
                 for (p = s;  p < e;) {
@@ -642,11 +639,11 @@ cl_object (*GC_enter_hook)() = NULL;
 cl_object (*GC_exit_hook)() = NULL;
 
 
-#ifdef THREADS
-/* 
+#ifdef ECL_LWP
+/*
  * We execute the GC routine in the main stack.
  * The idea is to switch over the main stack that is stopped in the intha
- * and to call the GC from there on garbage_parameter. Then you can switch 
+ * and to call the GC from there on garbage_parameter. Then you can switch
  * back after.
  * In addition the interrupt is disabled.
  */
@@ -676,7 +673,7 @@ gc(enum type t)
   int i, j;
   int tm;
   int gc_start = runtime();
-#endif THREADS
+#endif ECL_LWP
 
   if (!GC_enabled())
     return;
@@ -692,7 +689,7 @@ gc(enum type t)
 
   debug = symbol_value(siVgc_message) != ECL_NIL;
 
-#ifdef THREADS
+#ifdef ECL_LWP
   if (clwp != &main_lpd)  {
     if (debug) {
       printf("*STACK SWITCH*\n");
@@ -719,7 +716,7 @@ gc(enum type t)
 
   if (val == 1) {
 
-#endif THREADS
+#endif ECL_LWP
 
     if (GC_enter_hook != NULL)
       (*GC_enter_hook)(0);
@@ -816,9 +813,9 @@ gc(enum type t)
     if (GC_exit_hook != NULL)
       (*GC_exit_hook)();
 
-#ifdef THREADS
+#ifdef ECL_LWP
 
-    /* 
+    /*
      * Back in the right stack
      */
 
@@ -831,13 +828,13 @@ gc(enum type t)
       stack_switched = FALSE;
 
       end_critical_section();   /* we get here from the GC call in scheduler */
-          
+
       clwp = old_clwp;
       Values = clwp->lwp_Values;
       siglongjmp(old_env, 2);
     }
   }
-#endif THREADS
+#endif ECL_LWP
 
   gc_time += (gc_start = runtime() - gc_start);
 
@@ -851,9 +848,9 @@ gc(enum type t)
   if (interrupt_flag) sigint();
 #endif unix
 
-#ifdef THREADS
+#ifdef ECL_LWP
   end_critical_section();
-#endif THREADS
+#endif ECL_LWP
 }
 
 /*
