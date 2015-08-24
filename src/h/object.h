@@ -1038,7 +1038,7 @@ union cl_lispunion {
         struct ecl_instance     instance;       /*  clos instance */
 #ifdef ECL_THREADS
         struct ecl_process      process;        /*  process  */
-        struct ecl_queue        queue;          /*  lock  */
+        struct ecl_queue        queue;          /*  queue  */
         struct ecl_lock         lock;           /*  lock  */
         struct ecl_rwlock       rwlock;         /*  read/write lock  */
         struct ecl_condition_variable condition_variable; /*  condition-variable */
