@@ -29,6 +29,9 @@ ecl_def_string_array(feature_names,static,const) = {
 #if defined(GBC_BOEHM)
         ecl_def_string_array_elt("BOEHM-GC"),
 #endif
+#ifdef ECL_LWP
+        ecl_def_string_array_elt("GREEN-THREADS"),
+#endif
 #ifdef ECL_THREADS
         ecl_def_string_array_elt("THREADS"),
 #endif

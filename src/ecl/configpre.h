@@ -30,6 +30,9 @@
 /* ECL_LOING_LONG_BITS */
 #undef ECL_LONG_LONG_BITS
 
+/* Green threads? */
+#undef ECL_LWP
+
 /* Define if your newline is CR */
 #undef ECL_NEWLINE_IS_CR
 

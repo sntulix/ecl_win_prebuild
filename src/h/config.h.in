@@ -55,6 +55,9 @@
 #include "@ECL_GMP_HEADER@"
 #endif
 
+/* Green threads? */
+#undef ECL_LWP
+
 /* Userland threads?                                                    */
 #undef ECL_THREADS
 #ifdef ECL_THREADS

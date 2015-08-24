@@ -42,6 +42,8 @@
   "src:lsp;format.lsp"
   "src:lsp;defpackage.lsp"
   "src:lsp;ffi.lsp"
+#+green-threads
+  "src:lsp;thread.lsp"
   "src:lsp;mp.lsp"
 #+tk
   "src:lsp;tk-init.lsp"

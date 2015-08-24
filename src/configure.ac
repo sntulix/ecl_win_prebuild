@@ -39,6 +39,11 @@ AC_ARG_ENABLE(rpath,
 		  [(no|yes, default=NO)]),
   [], [enable_rpath=yes] )
 
+AC_ARG_ENABLE(lwp,
+  AS_HELP_STRING( [--enable-lwp],
+                  [support for green threads (yes|no, default=no).]),
+  [], [enable_lwp=no])
+
 AC_ARG_ENABLE(threads,
   AS_HELP_STRING( [--enable-threads],
                   [support for native threads (yes|no|auto, default=auto).]),
@@ -513,6 +518,13 @@ else
   ECL_CMPDIR=cmp
 fi
 AC_SUBST(ECL_CMPDIR)
+
+dnl ----------------------------------------------------------------------
+dnl Green thread support
+if test "${enable_lwp}" = "yes"; then
+   EXTRA_OBJS="${EXTRA_OBJS} lwp.${OBJEXT}"
+   AC_DEFINE([ECL_LWP], [1], [Green threads?])
+fi
 
 dnl ----------------------------------------------------------------------
 dnl Native thread support

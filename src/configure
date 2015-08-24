@@ -762,6 +762,7 @@ enable_option_checking
 with_cross_config
 enable_shared
 enable_rpath
+enable_lwp
 enable_threads
 enable_boehm
 enable_libatomic
@@ -1445,6 +1446,7 @@ Optional Features:
   --enable-shared         enable loading compiled files (default=YES)
   --enable-rpath          hard-code the location of the ECL shared library.
                           (no|yes, default=NO)
+  --enable-lwp            support for green threads (yes|no, default=no).
   --enable-threads        support for native threads (yes|no|auto,
                           default=auto).
   --enable-boehm          use the Boehm-Weiser garbage collector
@@ -2608,6 +2610,14 @@ if test "${enable_rpath+set}" = set; then :
   enableval=$enable_rpath;
 else
   enable_rpath=yes
+fi
+
+
+# Check whether --enable-lwp was given.
+if test "${enable_lwp+set}" = set; then :
+  enableval=$enable_lwp;
+else
+  enable_lwp=no
 fi
 
 
@@ -5763,6 +5773,13 @@ else
   ECL_CMPDIR=cmp
 fi
 
+
+if test "${enable_lwp}" = "yes"; then
+   EXTRA_OBJS="${EXTRA_OBJS} lwp.${OBJEXT}"
+
+$as_echo "#define ECL_LWP 1" >>confdefs.h
+
+fi
 
 if test "${enable_threads}" = "auto"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for threads support" >&5
