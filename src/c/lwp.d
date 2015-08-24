@@ -17,12 +17,32 @@
 
 #include <ecl/ecl.h>
 
+thread_desc *
+make_thread_desc (cl_object thread) {
+        thread_desc *desc;
+
+        desc = (thread_desc *)malloc(sizeof(thread_desc));
+        desc->thread = thread;
+        desc->status = ECL_THREAD_SUSPENDED;
+        desc->base = NULL;
+        /* desc->env = ??; */
+        desc->slice = 0;
+        desc->input = NULL;
+        desc->lpd = NULL;
+        desc->next = NULL;
+}
+
 cl_object
 si_make_thread (cl_object fun) {
         cl_object x;
 
+        if (cl_functionp(fun) == ECL_NIL)
+                FEwrong_type_argument(@'function', fun);
+
         x = ecl_alloc_object(t_thread);
+        x->thread.entry = fun;
         x->thread.cont = ECL_NIL;
+        x->thread.data = make_thread_desc(x);
         return x;
 }
 

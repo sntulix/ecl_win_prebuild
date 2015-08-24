@@ -852,6 +852,7 @@ struct ecl_dummy {
 };
 
 #ifdef ECL_LWP
+
 struct ecl_cont {
         _ECL_HDR2(resumed, timed_out);
         cl_object thread;
@@ -859,7 +860,9 @@ struct ecl_cont {
 
 struct ecl_thread {
         _ECL_HDR;
-        cl_object  cont;           /* its continuation */
+        cl_object entry;          /* entry point */
+        cl_object cont;           /* its continuation */
+        struct thread_desc *data; /* actual thread */
 };
 #endif /* ECL_LWP */
 
