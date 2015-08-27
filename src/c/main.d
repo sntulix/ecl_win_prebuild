@@ -44,6 +44,9 @@
 #include <ecl/cache.h>
 #include <ecl/internal.h>
 #include <ecl/ecl-inl.h>
+#ifdef HAVE_GETRLIMIT
+#include <sys/resource.h>
+#endif
 
 
 #include "ecl_features.h"
@@ -59,6 +62,66 @@ __thread cl_env_ptr cl_env_p = NULL;
 const char *ecl_self;
 
 /************************ GLOBAL INITIALIZATION ***********************/
+
+
+/* HEAP */
+
+/* 10MB extra for ECL itself */
+#define HEAP_GAP (10 * 1024 * 1024)
+
+#if ECL_FIXNUM_BITS <= 32
+#define HEAP_SIZE_DEFAULT (1024 * 1024 * 1024)
+#else
+#define HEAP_SIZE_DEFAULT (4096 * 1024 * 1024)
+#endif
+
+/*
+ * If the target heap size (1GB on 32-bit, 4GB otherwise) exceeds
+ * the soft process data size rlimit, attempt to grow the soft limit.
+ * If the hard limit doesn't allow it, reduce the target heap size
+ * to the soft limit.  The heap will be smaller than expected, but ECL will
+ * be able to report allocation errors gracefully rather than busy-looping
+ * attempting to allocate even more room to report the error and encountering
+ * even more allocation errors.
+ */
+size_t
+fix_heap_size(size_t target)
+{
+#ifdef HAVE_SETRLIMIT
+        struct rlimit rlp;
+
+        if (getrlimit(RLIMIT_DATA, &rlp) != 0) {
+                /* Cannot evaluate, keep target */
+                return target;
+        }
+        /* Soft limit too low? */
+        if (target + HEAP_GAP > rlp.rlim_cur) {
+                size_t missing = target + HEAP_GAP - rlp.rlim_cur;
+
+                /* Hard limit too low to reach target? */
+                if (rlp.rlim_cur + missing > rlp.rlim_max) {
+                        /* XXX We could error immediately here instead */
+                        return (rlp.rlim_max - HEAP_GAP);
+                }
+
+                if (rlp.rlim_cur + missing < rlp.rlim_max) {
+                        /* Attempt to grow soft limit */
+                        rlp.rlim_cur += missing;
+                        if (setrlimit(RLIMIT_DATA, &rlp) == 0)
+                                return target;
+                        else {
+                                /* XXX We could error immediately instead */
+                                return (rlp.rlim_cur - HEAP_GAP);
+                        }
+                } else {
+                        /* XXX We could error immediately instead */
+                        return (rlp.rlim_cur - HEAP_GAP);
+                }
+        }
+#endif
+        return target;
+}
+
 
 static int ARGC;
 static char **ARGV;
@@ -88,11 +151,7 @@ cl_fixnum ecl_option_values[ECL_OPT_LIMIT+1] = {
         128*sizeof(cl_index)*1024, /* ECL_OPT_C_STACK_SIZE */
         4*sizeof(cl_index)*1024, /* ECL_OPT_C_STACK_SAFETY_AREA */
         1,              /* ECL_OPT_SIGALTSTACK_SIZE */
-#if ECL_FIXNUM_BITS <= 32
-        1024*1024*1024, /* ECL_OPT_HEAP_SIZE */
-#else
-        4024*1024*1024, /* ECL_OPT_HEAP_SIZE */
-#endif
+        0,              /* ECL_OPT_HEAP_SIZE (set below in cl_boot()) */
         1024*1024,      /* ECL_OPT_HEAP_SAFETY_AREA */
         0,              /* ECL_OPT_THREAD_INTERRUPT_SIGNAL */
         1,              /* ECL_OPT_SET_GMP_MEMORY_FUNCTIONS */
@@ -488,6 +547,9 @@ cl_boot(int argc, char **argv)
         cl_object features;
         int i;
         cl_env_ptr env;
+
+        ecl_option_values[ECL_OPT_HEAP_SIZE] =
+            fix_heap_size(HEAP_SIZE_DEFAULT);
 
         i = ecl_option_values[ECL_OPT_BOOTED];
         if (i) {

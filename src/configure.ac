@@ -710,6 +710,8 @@ AC_CHECK_FUNCS( [nanosleep alarm times select setenv putenv] \
                 [lstat mkstemp sigprocmask isatty tzset] \
 		[gettimeofday getrusage] )
 
+AC_CHECK_FUNCS( [getrlimit setrlimit] )
+
 dnl AC_CHECK_FUNCS( [ feenableexcept ] )
 
 AC_CHECK_FUNCS( [expf logf sqrtf cosf sinf tanf sinhf coshf tanhf] \
