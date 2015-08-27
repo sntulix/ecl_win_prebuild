@@ -633,7 +633,7 @@ si_set_limit(cl_object type, cl_object limit)
         } else if (type == @'ext::lisp-stack')
                 ecl_stack_set_size(env, the_size);
         else
-                _ecl_set_max_heap_size(the_size);
+                _ecl_set_max_heap_size(fix_heap_size(the_size));
 
         return si_get_limit(type);
 }
