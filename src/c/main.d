@@ -87,6 +87,7 @@ const char *ecl_self;
 size_t
 fix_heap_size(size_t target)
 {
+#ifdef HAVE_GETRLIMIT
 #ifdef HAVE_SETRLIMIT
         struct rlimit rlp;
 
@@ -118,6 +119,7 @@ fix_heap_size(size_t target)
                         return (rlp.rlim_cur - HEAP_GAP);
                 }
         }
+#endif
 #endif
         return target;
 }
