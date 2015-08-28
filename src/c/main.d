@@ -66,79 +66,82 @@ const char *ecl_self;
 
 /* HEAP */
 
-/* 10MB extra for ECL itself */
-#define HEAP_GAP (10 * 1024 * 1024)
-
 #if ECL_FIXNUM_BITS <= 32
 #define HEAP_SIZE_DEFAULT (1024 * 1024 * 1024)
 #else
 #define HEAP_SIZE_DEFAULT (4096 * 1024 * 1024)
 #endif
 
-/* Could eventually be conditional on a DEBUG definition if kept */
+/* XXX Could eventually be conditional on a DEBUG definition if kept */
 static void
 w(const char *fmt, ...)
 {
-	va_list ap;
+        va_list ap;
 
-	dprintf(2, "HEAP-SIZE-WARNING: ");
-	va_start(ap, fmt);
-	(void) vdprintf(2, fmt, ap);
-	va_end(ap);
-	dprintf(2, "\n");
+        dprintf(2, "HEAP-SIZE-WARNING: ");
+        va_start(ap, fmt);
+        (void) vdprintf(2, fmt, ap);
+        va_end(ap);
+        dprintf(2, "\n");
 }
 
 /*
- * If the target heap size (1GB on 32-bit, 4GB otherwise) exceeds
- * the soft process data size rlimit, attempt to grow the soft limit.
- * If the hard limit doesn't allow it, reduce the target heap size
- * to the soft limit.  The heap will be smaller than expected, but ECL will
- * be able to report allocation errors gracefully rather than busy-looping
- * attempting to allocate even more room to report the error and encountering
- * even more allocation errors.
+ * If the target heap size exceeds the process's hard RLIMIT_DATA limit,
+ * reduce the target.  If the target exceeds the soft RLIMIT_DATA, attempt to
+ * grow the soft limit.
+ * The resulting heap might be smaller than requested, but ECL will be able to
+ * report allocation errors gracefully when it's reached, rather than
+ * busy-looping attempting to allocate even more resources to report the
+ * error.
+ * XXX It'd be nice to query the actual ECL heap requirements to set heap_gap,
+ * but this would need to be done portably.  On 32-bit i686 ECL, it seemed
+ * safe to have this value at 10MB, but on 64-bit amd64 ECL under 50MB the
+ * issue may still occur.
  */
 size_t
 fix_heap_size(size_t target)
 {
+        w("Entering fix_heap_size(%zd)", target);
+
 #if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_DATA)
         struct rlimit rlp;
+        size_t heap_gap = (50 * 1024 * 1024);
 
-	w("Entering fix_heap_size(%zd)", target);
         if (getrlimit(RLIMIT_DATA, &rlp) != 0) {
-		w("Cannot obtain RLIMIT_DATA, returning %zd", target);
+                w("Cannot obtain RLIMIT_DATA, returning %zd", target);
                 /* Cannot evaluate, keep target */
                 return target;
         }
 
-	/* Hard limit too low?  Reduce target if so. */
-	if (target + HEAP_GAP > rlp.rlim_max) {
-		w("Hard RLIMIT_DATA too low (%zd), reducing target to %zd",
-		  rlp.rlim_max, rlp.rlim_max - HEAP_GAP);
-		target = rlp.rlim_max - HEAP_GAP;
-	}
+        /* Hard limit too low?  Reduce target if so. */
+        if (target + heap_gap > rlp.rlim_max) {
+                w("Hard RLIMIT_DATA too low (%zd), reducing target to %zd",
+                  rlp.rlim_max, rlp.rlim_max - heap_gap);
+                target = rlp.rlim_max - heap_gap;
+        }
 
         /* Soft limit too low? */
-        if (target + HEAP_GAP > rlp.rlim_cur) {
-                size_t missing = target + HEAP_GAP - rlp.rlim_cur;
+        if (target + heap_gap > rlp.rlim_cur) {
+                size_t missing = target + heap_gap - rlp.rlim_cur;
 
-		w("Soft RLIMIT_DATA too low (%zd)", rlp.rlim_cur);
-		/* Attempt to grow soft limit */
-		rlp.rlim_cur += missing;
-		w("Trying to increase soft limit to %zd",
-		  rlp.rlim_cur);
-		if (setrlimit(RLIMIT_DATA, &rlp) == 0) {
-			w("We could increase soft limit to %zd, returning %zd",
-			  rlp.rlim_cur, target);
-			return target;
-		} else {
-			w("We could not grow soft limit to %zd, returning %zd",
-			  rlp.rlim_cur, rlp.rlim_cur - HEAP_GAP - missing);
-			return (rlp.rlim_cur - HEAP_GAP - missing);
-		}
+                w("Soft RLIMIT_DATA too low (%zd)", rlp.rlim_cur);
+                /* Attempt to grow soft limit */
+                rlp.rlim_cur += missing;
+                w("Trying to increase soft limit to %zd",
+                  rlp.rlim_cur);
+                if (setrlimit(RLIMIT_DATA, &rlp) == 0) {
+                        w("We could increase soft limit to %zd, returning %zd",
+                          rlp.rlim_cur, target);
+                        return target;
+                } else {
+                        w("We could not grow soft limit to %zd, returning %zd",
+                          rlp.rlim_cur, rlp.rlim_cur - heap_gap - missing);
+                        return (rlp.rlim_cur - heap_gap - missing);
+                }
         }
 
 #endif
-	w("Returning %zd", target);
+        w("Returning %zd", target);
         return target;
 }
 
