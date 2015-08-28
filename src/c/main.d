@@ -103,48 +103,42 @@ fix_heap_size(size_t target)
 #if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_DATA)
         struct rlimit rlp;
 
-	w("Entering fix_heap_size(%d)", target);
+	w("Entering fix_heap_size(%zd)", target);
         if (getrlimit(RLIMIT_DATA, &rlp) != 0) {
-		w("Cannot obtain RLIMIT_DATA, returning %d", target);
+		w("Cannot obtain RLIMIT_DATA, returning %zd", target);
                 /* Cannot evaluate, keep target */
                 return target;
         }
+
+	/* Hard limit too low?  Reduce target if so. */
+	if (target + HEAP_GAP > rlp.rlim_max) {
+		w("Hard RLIMIT_DATA too low (%zd), reducing target to %zd",
+		  rlp.rlim_max, rlp.rlim_max - HEAP_GAP);
+		target = rlp.rlim_max - HEAP_GAP;
+	}
+
         /* Soft limit too low? */
         if (target + HEAP_GAP > rlp.rlim_cur) {
                 size_t missing = target + HEAP_GAP - rlp.rlim_cur;
 
-		w("Soft RLIMIT_DATA too low (%d)", rlp.rlim_cur);
-                /* Hard limit too low to reach target? */
-                if (rlp.rlim_cur + missing > rlp.rlim_max) {
-			w("Hard RLIMIT_DATA too low (%d), reducing target to %d",
-			     rlp.rlim_max, rlp.rlim_max);
-			target = rlp.rlim_max;
-			missing = target + HEAP_GAP - rlp.rlim_cur;
-                }
-
-                if (rlp.rlim_cur + missing < rlp.rlim_max) {
-                        /* Attempt to grow soft limit */
-                        rlp.rlim_cur += missing;
-			w("Trying to increase soft limit to %d",
-			     rlp.rlim_cur);
-                        if (setrlimit(RLIMIT_DATA, &rlp) == 0) {
-				w("We could increase soft limit to %d, returning %d",
-				     rlp.rlim_cur, target);
-                                return target;
-			} else {
-				w("We could not grow soft limit to %d, returning %d",
-				     rlp.rlim_cur,
-				     rlp.rlim_cur - HEAP_GAP - missing);
-                                return (rlp.rlim_cur - HEAP_GAP - missing);
-                        }
-                } else {
-			w("Hard limit too low, returning %d",
-			     rlp.rlim_cur - HEAP_GAP);
-                        return (rlp.rlim_cur - HEAP_GAP);
-                }
+		w("Soft RLIMIT_DATA too low (%zd)", rlp.rlim_cur);
+		/* Attempt to grow soft limit */
+		rlp.rlim_cur += missing;
+		w("Trying to increase soft limit to %zd",
+		  rlp.rlim_cur);
+		if (setrlimit(RLIMIT_DATA, &rlp) == 0) {
+			w("We could increase soft limit to %zd, returning %zd",
+			  rlp.rlim_cur, target);
+			return target;
+		} else {
+			w("We could not grow soft limit to %zd, returning %zd",
+			  rlp.rlim_cur, rlp.rlim_cur - HEAP_GAP - missing);
+			return (rlp.rlim_cur - HEAP_GAP - missing);
+		}
         }
+
 #endif
-	w("Returning %d", target);
+	w("Returning %zd", target);
         return target;
 }
 
