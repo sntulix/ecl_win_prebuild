@@ -66,7 +66,7 @@ const char *ecl_self;
 
 /* HEAP */
 
-#if FIXNUM_BITS <= 32
+#if ECL_FIXNUM_BITS <= 32
 /* 1GB */
 #define HEAP_SIZE_DEFAULT 1073741824L
 #else
@@ -103,7 +103,7 @@ w(const char *fmt, ...)
 size_t
 fix_heap_size(size_t target)
 {
-        w("FIXNUM_BITS = %d", FIXNUM_BITS);
+        w("ECL_FIXNUM_BITS = %d", ECL_FIXNUM_BITS);
         w("HEAP_SIZE_DEFAULT = %zd", HEAP_SIZE_DEFAULT);
         w("Entering fix_heap_size(%zd)", target);
 
