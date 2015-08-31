@@ -96,9 +96,12 @@ w(const char *fmt, ...)
  * busy-looping attempting to allocate even more resources to report the
  * error.
  * XXX It'd be nice to query the actual ECL heap requirements to set heap_gap,
- * but this would need to be done portably.  On 32-bit i686 ECL, it seemed
- * safe to have this value at 10MB, but on 64-bit amd64 ECL under 50MB the
- * issue may still occur.
+ * but this would need to be done portably.
+ * Oddly, on NetBSD, 10MB seems enough for 32-bit with 1GB heap size, 50MB
+ * seems enough on 64-bit with 1GB heap size, but 150MB for 64-bit 4G heap
+ * size.  It appears safe to adapt heap_gap for 50MB per 1GB of additional
+ * heap.  The reason is not understood yet, it could perhaps be a side effect
+ * of the jemalloc allocator.
  */
 size_t
 fix_heap_size(size_t target)
@@ -109,8 +112,9 @@ fix_heap_size(size_t target)
 
 #if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_DATA)
         struct rlimit rlp;
-        size_t heap_gap = (50 * 1024 * 1024);
+        size_t heap_gap = (50 * 1024 * 1024) * (target / 1024 / 1024 / 1024);
 
+        w("heap_gap = %zd", heap_gap);
         if (getrlimit(RLIMIT_DATA, &rlp) != 0) {
                 w("Cannot obtain RLIMIT_DATA, returning %zd", target);
                 /* Cannot evaluate, keep target */
