@@ -108,8 +108,8 @@ _ecl_big_register_normalize(cl_object x)
 #if GMP_LIMB_BITS >= ECL_FIXNUM_BITS
 static const int limbs_per_fixnum = 1;
 #else
-static const int limbs_per_fixnum = (ECL_FIXNUM_BITS + GMP_LIMB_BITS - 1)
-        / GMP_LIMB_BITS;
+static const int limbs_per_fixnum = (ECL_FIXNUM_BITS + GMP_LIMB_BITS - 1) /
+        GMP_LIMB_BITS;
 #endif
 
 #define ECL_BIGNUM_ABS_SIZE(x) \
