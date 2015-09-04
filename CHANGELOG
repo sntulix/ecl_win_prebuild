@@ -36,16 +36,19 @@
      mp:mailbox-try-read  (non-blocking)
      mp:mailbox-try-send  (non-blocking)
 
+   - Added back removed C interfaces
+     ecl_improt_current_thread
+     ecl_release_current_thread
+
 ** Enhancements:
 
    - Added code walker (present as *feature* :walker)
 
    - Testing framework cleanup
 
-** Issues fixed:
+   - Format fallbacks to prin1 if infinity or NaN are passed to it
 
-   - PPC64le builds with bundled GMP work (autoreconf with recent
-     autotools)
+** Issues fixed:
 
    - Building with single-threaded boehm works if ECL threads are disabled
 
@@ -53,6 +56,9 @@
 
      (read-from-string
       "(#1=\"Hello\" #S(sharp-s-reader.1.example-struct :A #1#))")
+
+   - Generated C code works well with IEEE 754 infinities
+     (regression tests created)
 
 * 16.0.0 changes since 15.3.7
 ** API changes
