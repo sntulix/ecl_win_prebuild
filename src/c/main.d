@@ -76,17 +76,52 @@ const char *ecl_self;
 #define HEAP_SIZE_DEFAULT 4294967296L
 #endif
 
-/* XXX Could eventually be conditional on a DEBUG definition if kept */
+#define HEAP_MESSAGE_BUFSIZ 4096
+static char *heap_message = NULL;
+static int heap_message_size = 0;
+
+/*
+ * Similar to fprintf(3) to stderr, but instead accumulates in a string
+ * buffer dedicated to heap size warnings.
+ */
 static void
-w(const char *fmt, ...)
+heap_size_warn(const char *fmt, ...)
 {
         va_list ap;
 
-        dprintf(2, "HEAP-SIZE-WARNING: ");
+        if (heap_message == NULL) {
+                heap_message = malloc(HEAP_MESSAGE_BUFSIZ);
+                heap_message_size = 0;
+        }
+
         va_start(ap, fmt);
-        (void) vdprintf(2, fmt, ap);
+        heap_message_size += vsnprintf(&heap_message[heap_message_size],
+            HEAP_MESSAGE_BUFSIZ - heap_message_size, fmt, ap);
         va_end(ap);
-        dprintf(2, "\n");
+}
+
+/*
+ * Returns a CL base string if heap warnings exist, or NIL.
+ * For use by top.lsp.
+ */
+cl_object
+heap_size_warning(void)
+{
+        cl_object str = ECL_NIL;
+
+        if (heap_message != NULL) {
+                if (heap_message_size >= HEAP_MESSAGE_BUFSIZ)
+                        heap_message[HEAP_MESSAGE_BUFSIZ - 1] = '\0';
+                else
+                        heap_message[heap_message_size] = '\0';
+                str = make_base_string_copy(heap_message);
+
+                free(heap_message);
+                heap_message = NULL;
+                heap_message_size = 0;
+        }
+
+        return str;
 }
 
 /*
@@ -97,61 +132,67 @@ w(const char *fmt, ...)
  * report allocation errors gracefully when it's reached, rather than
  * busy-looping attempting to allocate even more resources to report the
  * error.
- * XXX It'd be nice to query the actual ECL heap requirements to set heap_gap,
- * but this would need to be done portably.
+ * XXX It'd be nice to query the actual ECL heap requirements to adapt
+ * heap_gap, but this would need to be done portably.
  * Oddly, on NetBSD, 10MB seems enough for 32-bit with 1GB heap size, 50MB
  * seems enough on 64-bit with 1GB heap size, but 150MB for 64-bit 4G heap
  * size.  It appears safe to adapt heap_gap for 50MB per 1GB of additional
  * heap.  The reason is not understood yet, it could perhaps be a side effect
- * of the jemalloc allocator.
+ * of the jemalloc allocator.  Moreover, increasing the heap safe area does
+ * not seem to be a working substitute for heap_gap.
  */
 size_t
 fix_heap_size(size_t target)
 {
-        w("ECL_FIXNUM_BITS = %d", ECL_FIXNUM_BITS);
-        w("HEAP_SIZE_DEFAULT = %zd", HEAP_SIZE_DEFAULT);
-        w("Entering fix_heap_size(%zd)", target);
-
 #if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_DATA)
         struct rlimit rlp;
-        size_t heap_gap = (50 * 1024 * 1024) * (target / 1024 / 1024 / 1024);
+        /* (50 * 1024 * 1024) * (target / 1024 / 1024 / 1024); */
+        size_t heap_gap = 50 * (target / 1024);
 
-        w("heap_gap = %zd", heap_gap);
+        heap_size_warn("Using a safety heap gap of %zd bytes.  ", heap_gap);
         if (getrlimit(RLIMIT_DATA, &rlp) != 0) {
-                w("Cannot obtain RLIMIT_DATA, returning %zd", target);
                 /* Cannot evaluate, keep target */
+                heap_size_warn(
+                    "We could not obtain RLIMIT_DATA, using a %zd bytes "
+                    "heap size.",
+                    target);
                 return target;
         }
 
         /* Hard limit too low?  Reduce target if so. */
         if (target + heap_gap > rlp.rlim_max) {
-                w("Hard RLIMIT_DATA too low (%zd), reducing target to %zd",
-                  rlp.rlim_max, rlp.rlim_max - heap_gap);
+                heap_size_warn(
+                    "The hard RLIMIT_DATA is too low (%zd bytes), reducing "
+                    "the heap size target to %zd bytes.  ",
+                    rlp.rlim_max, rlp.rlim_max - heap_gap);
                 target = rlp.rlim_max - heap_gap;
         }
 
         /* Soft limit too low? */
         if (target + heap_gap > rlp.rlim_cur) {
                 size_t missing = target + heap_gap - rlp.rlim_cur;
+                rlim_t oldcur = rlp.rlim_cur;
 
-                w("Soft RLIMIT_DATA too low (%zd)", rlp.rlim_cur);
                 /* Attempt to grow soft limit */
                 rlp.rlim_cur += missing;
-                w("Trying to increase soft limit to %zd",
-                  rlp.rlim_cur);
                 if (setrlimit(RLIMIT_DATA, &rlp) == 0) {
-                        w("We could increase soft limit to %zd, returning %zd",
-                          rlp.rlim_cur, target);
+                        heap_size_warn(
+                           "The soft RLIMIT_DATA was too low (%zd bytes), "
+                           "but we could increase it to %zd bytes.  "
+                           "Using a %zd bytes heap size.",
+                           oldcur, rlp.rlim_cur, target);
                         return target;
                 } else {
-                        w("We could not grow soft limit to %zd, returning %zd",
-                          rlp.rlim_cur, rlp.rlim_cur - heap_gap - missing);
+                        heap_size_warn(
+                            "We could not grow the soft RLIMIT_DATA to %zd "
+                            "bytes.  Using a %zd bytes heap size.",
+                            rlp.rlim_cur, rlp.rlim_cur - heap_gap - missing);
                         return (rlp.rlim_cur - heap_gap - missing);
                 }
         }
 
 #endif
-        w("Returning %zd", target);
+        heap_size_warn("Using a %zd bytes heap size.", target);
         return target;
 }
 

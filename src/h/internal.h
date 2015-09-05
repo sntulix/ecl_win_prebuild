@@ -55,8 +55,6 @@ extern void init_lib_LSP(cl_object);
 extern cl_env_ptr _ecl_alloc_env(cl_env_ptr parent);
 extern void _ecl_dealloc_env(cl_env_ptr);
 
-extern size_t fix_heap_size(size_t target);
-
 /* alloc.d/alloc_2.d */
 
 #ifdef GBC_BOEHM
@@ -349,6 +347,8 @@ extern cl_object _ecl_long_double_to_integer(long double d);
 /* main.d */
 
 extern cl_fixnum ecl_option_values[ECL_OPT_LIMIT+1];
+extern size_t fix_heap_size(size_t target);
+extern cl_object heap_size_warning(void);
 
 /* print.d */
 
