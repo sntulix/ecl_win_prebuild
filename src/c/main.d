@@ -164,7 +164,7 @@ fix_heap_size(size_t target)
                 heap_size_warn(
                     "The hard RLIMIT_DATA is too low (%zd bytes), reducing "
                     "the heap size target to %zd bytes.  ",
-                    rlp.rlim_max, rlp.rlim_max - heap_gap);
+                    (size_t)rlp.rlim_max, (size_t)(rlp.rlim_max - heap_gap));
                 target = rlp.rlim_max - heap_gap;
         }
 
@@ -180,14 +180,15 @@ fix_heap_size(size_t target)
                            "The soft RLIMIT_DATA was too low (%zd bytes), "
                            "but we could increase it to %zd bytes.  "
                            "Using a %zd bytes heap size.",
-                           oldcur, rlp.rlim_cur, target);
+                           (size_t)oldcur, (size_t)rlp.rlim_cur, target);
                         return target;
                 } else {
                         heap_size_warn(
                             "We could not grow the soft RLIMIT_DATA to %zd "
                             "bytes.  Using a %zd bytes heap size.",
-                            rlp.rlim_cur, rlp.rlim_cur - heap_gap - missing);
-                        return (rlp.rlim_cur - heap_gap - missing);
+                            (size_t)rlp.rlim_cur,
+                            (size_t)(rlp.rlim_cur - heap_gap - missing));
+                        return (size_t)(rlp.rlim_cur - heap_gap - missing);
                 }
         }
 
