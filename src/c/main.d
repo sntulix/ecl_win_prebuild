@@ -146,25 +146,35 @@ fix_heap_size(size_t target)
 {
 #if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_DATA)
         struct rlimit rlp;
+#endif
         /* (50 * 1024 * 1024) * (target / 1024 / 1024 / 1024); */
         size_t heap_gap = 50 * (target / 1024);
 
-        heap_size_warn("Using a safety heap gap of %zd bytes.  ", heap_gap);
+        if (target == HEAP_SIZE_DEFAULT)
+                heap_size_warn("Applying default heap size limit: ");
+        else
+                heap_size_warn("Applying custom heap size limit: ");
+
+#if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_DATA)
         if (getrlimit(RLIMIT_DATA, &rlp) != 0) {
                 /* Cannot evaluate, keep target */
                 heap_size_warn(
-                    "We could not obtain RLIMIT_DATA, using a %zd bytes "
-                    "heap size limit.",
-                    target);
+                    "We could not obtain RLIMIT_DATA, using a %lu bytes "
+                    "heap size limit.  ",
+                    (unsigned long)target);
                 return target;
         }
 
         /* Hard limit too low?  Reduce target if so. */
         if (target + heap_gap > rlp.rlim_max) {
+                heap_gap = 50 * (rlp.rlim_max / 1024);
                 heap_size_warn(
-                    "The hard RLIMIT_DATA is too low (%zd bytes), reducing "
-                    "the heap size limit target to %zd bytes.  ",
-                    (size_t)rlp.rlim_max, (size_t)(rlp.rlim_max - heap_gap));
+                    "The hard RLIMIT_DATA is too low (%lu bytes), reducing "
+                    "the heap size limit target from %lu bytes to %lu "
+                    "bytes, using a %lu bytes safety heap gap.  ",
+                    (unsigned long)rlp.rlim_max, (unsigned long)target,
+                    (unsigned long)(rlp.rlim_max - heap_gap),
+                    (unsigned long)heap_gap);
                 target = rlp.rlim_max - heap_gap;
         }
 
@@ -177,23 +187,29 @@ fix_heap_size(size_t target)
                 rlp.rlim_cur += missing;
                 if (setrlimit(RLIMIT_DATA, &rlp) == 0) {
                         heap_size_warn(
-                           "The soft RLIMIT_DATA was too low (%zd bytes), "
-                           "but we could increase it to %zd bytes.  "
-                           "Using a %zd bytes heap size limit.",
-                           (size_t)oldcur, (size_t)rlp.rlim_cur, target);
+                           "The soft RLIMIT_DATA was too low (%lu bytes), "
+                           "but we could increase it to %lu bytes.  "
+                           "Using a %lu bytes heap size limit with a %lu "
+                           "bytes safety heap gap.  ",
+                           (unsigned long)oldcur, (unsigned long)rlp.rlim_cur,
+                           (unsigned long)target, (unsigned long)heap_gap);
                         return target;
                 } else {
                         heap_size_warn(
-                            "We could not grow the soft RLIMIT_DATA to %zd "
-                            "bytes.  Using a %zd bytes heap size limit.",
-                            (size_t)rlp.rlim_cur,
-                            (size_t)(rlp.rlim_cur - heap_gap - missing));
+                            "We could not grow the soft RLIMIT_DATA to %lu "
+                            "bytes.  Using a %lu bytes heap size limit "
+                            "instead of %lu bytes, with a %lu bytes safety "
+                            "heap gap.  ",
+                            (unsigned long)rlp.rlim_cur,
+                            (unsigned long)(rlp.rlim_cur - heap_gap - missing),
+                            (unsigned long)target, (unsigned long)heap_gap);
                         return (size_t)(rlp.rlim_cur - heap_gap - missing);
                 }
         }
 
 #endif
-        heap_size_warn("Using a %zd bytes heap size limit.", target);
+        heap_size_warn("Using a %lu bytes heap size limit.  ",
+            (unsigned long)target);
         return target;
 }
 
