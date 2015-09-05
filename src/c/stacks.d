@@ -621,21 +621,26 @@ cl_object
 si_set_limit(cl_object type, cl_object limit)
 {
         cl_env_ptr env = ecl_process_env();
-        cl_index the_size = ecl_to_size(limit);
         cl_index margin;
         if (type == @'ext::frame-stack') {
+                cl_index the_size = ecl_to_size(limit);
                 margin = ecl_option_values[ECL_OPT_FRAME_STACK_SAFETY_AREA];
                 frs_set_size(env, the_size + 2*margin);
         } else if (type == @'ext::binding-stack') {
+                cl_index the_size = ecl_to_size(limit);
                 margin = ecl_option_values[ECL_OPT_BIND_STACK_SAFETY_AREA];
                 ecl_bds_set_size(env, the_size + 2*margin);
         } else if (type == @'ext::c-stack') {
+                cl_index the_size = ecl_to_size(limit);
                 margin = ecl_option_values[ECL_OPT_C_STACK_SAFETY_AREA];
                 cs_set_size(env, the_size + 2*margin);
-        } else if (type == @'ext::lisp-stack')
+        } else if (type == @'ext::lisp-stack') {
+                cl_index the_size = ecl_to_size(limit);
                 ecl_stack_set_size(env, the_size);
-        else
+        } else {
+                size_t the_size = (size_t)ecl_to_ulong(limit);
                 _ecl_set_max_heap_size(fix_heap_size(the_size));
+        }
 
         return si_get_limit(type);
 }
