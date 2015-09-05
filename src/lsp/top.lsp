@@ -412,7 +412,7 @@ under certain conditions; see file 'Copyright' for details.")
                                           "heap_size_warning()"
                                           :one-liner t)))
           (when heap-warning
-            (format *standard-output* "~%~%Heap warning: ~A~%" heap-warning)))
+            (format *standard-output* "~%~%~A~%" heap-warning)))
         (format *standard-output* "~%Type :h for Help.  "))
       (setq *lisp-initialized* t)
 
