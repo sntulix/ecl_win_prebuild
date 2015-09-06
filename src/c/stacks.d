@@ -638,6 +638,10 @@ si_set_limit(cl_object type, cl_object limit)
                 cl_index the_size = ecl_to_size(limit);
                 ecl_stack_set_size(env, the_size);
         } else {
+                /*
+                 * size_t can be larger than cl_index, and ecl_to_size()
+                 * creates a fixnum which is too small for size_t on 32-bit.
+                 */
                 size_t the_size = (size_t)ecl_to_ulong(limit);
                 _ecl_set_max_heap_size(fix_heap_size(the_size));
         }
@@ -659,7 +663,8 @@ si_get_limit(cl_object type)
         else if (type == @'ext::lisp-stack')
                 output = env->stack_limit_size;
         else
-                output = cl_core.max_heap_size;
+                /* size_t can be larger than cl_index */
+                @(return ecl_make_unsigned_integer(cl_core.max_heap_size));
 
         @(return ecl_make_unsigned_integer(output))
 }
