@@ -1,4 +1,6 @@
-/* -*- mode: c; c-basic-offset: 8 -*- */
+/* -*- Mode: C; c-basic-offset: 8; indent-tabs-mode: nil -*- */
+/* vim: set filetype=c tabstop=8 shiftwidth=4 expandtab: */
+
 #ifndef ECL_EXTERNAL_H
 #define ECL_EXTERNAL_H
 
@@ -230,7 +232,7 @@ struct cl_core_struct {
 #endif
         cl_object libraries;
 
-        cl_index max_heap_size;
+        size_t max_heap_size;
         cl_object bytes_consed;
         cl_object gc_counter;
         bool gc_stats;
@@ -1037,8 +1039,8 @@ extern ECL_API ecl_uint8_t ecl_to_uint8_t(cl_object o);
 extern ECL_API ecl_int8_t ecl_to_int8_t(cl_object o);
 #define ecl_make_uint8_t(i) ecl_make_fixnum(i)
 #define ecl_make_int8_t(i) ecl_make_fixnum(i)
-#if FIXNUM_BITS < 32
-# error "Unsupported platforms with FIXNUM_BITS < 32"
+#if ECL_FIXNUM_BITS < 32
+# error "Unsupported platforms with ECL_FIXNUM_BITS < 32"
 #endif
 #ifdef ecl_uint16_t
 extern ECL_API ecl_uint16_t ecl_to_uint16_t(cl_object o);
@@ -1051,7 +1053,7 @@ extern ECL_API short ecl_to_short(cl_object o);
 #define ecl_make_short(n) ecl_make_fixnum(n)
 #define ecl_make_ushort(n) ecl_make_fixnum(n)
 #ifdef ecl_uint32_t
-# if FIXNUM_BITS == 32
+# if ECL_FIXNUM_BITS == 32
 #  define ecl_to_uint32_t fixnnint
 #  define ecl_to_int32_t fixint
 #  define ecl_make_uint32_t ecl_make_unsigned_integer
@@ -1064,7 +1066,7 @@ extern ECL_API ecl_int32_t ecl_to_int32_t(cl_object o);
 # endif
 #endif /* ecl_uint32_t */
 #ifdef ecl_uint64_t
-# if FIXNUM_BITS >= 64
+# if ECL_FIXNUM_BITS >= 64
 #  define ecl_to_uint64_t fixnnint
 #  define ecl_to_int64_t fixint
 #  define ecl_make_uint64_t ecl_make_unsigned_integer
@@ -1733,6 +1735,8 @@ extern ECL_API cl_object mp_current_process(void);
 extern ECL_API cl_object mp_block_signals(void);
 extern ECL_API cl_object mp_restore_signals(cl_object sigmask);
 
+extern ECL_API bool ecl_import_current_thread(cl_object process_name, cl_object process_binding);
+extern ECL_API void ecl_release_current_thread(void);
 
 /* threads/semaphore.d */
 
@@ -1741,6 +1745,7 @@ extern ECL_API cl_object mp_semaphore_count(cl_object);
 extern ECL_API cl_object mp_semaphore_name(cl_object);
 extern ECL_API cl_object mp_semaphore_wait_count(cl_object);
 extern ECL_API cl_object mp_wait_on_semaphore(cl_object);
+extern ECL_API cl_object mp_try_get_semaphore(cl_object);
 extern ECL_API cl_object mp_signal_semaphore _ECL_ARGS((cl_narg, cl_object, ...));
 extern ECL_API cl_object ecl_make_semaphore(cl_object name, cl_fixnum count);
 
@@ -1761,7 +1766,9 @@ extern ECL_API cl_object mp_mailbox_name(cl_object mailbox);
 extern ECL_API cl_object mp_mailbox_count(cl_object mailbox);
 extern ECL_API cl_object mp_mailbox_empty_p(cl_object);
 extern ECL_API cl_object mp_mailbox_read(cl_object mailbox);
+extern ECL_API cl_object mp_mailbox_try_read(cl_object mailbox);
 extern ECL_API cl_object mp_mailbox_send(cl_object mailbox, cl_object msg);
+extern ECL_API cl_object mp_mailbox_try_send(cl_object mailbox, cl_object msg);
 
 /* threads/atomic.c */
 

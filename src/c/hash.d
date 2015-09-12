@@ -1,4 +1,6 @@
-/* -*- mode: c; c-basic-offset: 8 -*- */
+/* -*- Mode: C; c-basic-offset: 8; indent-tabs-mode: nil -*- */
+/* vim: set filetype=c tabstop=8 shiftwidth=4 expandtab: */
+
 /*
     hash.d  -- Hash tables.
 */
@@ -1055,7 +1057,7 @@ cl_object
 cl_sxhash(cl_object key)
 {
         cl_index output = _hash_equal(3, 0, key);
-        const cl_index mask = ((cl_index)1 << (FIXNUM_BITS - 3)) - 1;
+        const cl_index mask = ((cl_index)1 << (ECL_FIXNUM_BITS - 3)) - 1;
         @(return ecl_make_fixnum(output & mask))
 }
 
