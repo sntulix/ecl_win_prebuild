@@ -4,6 +4,7 @@ imported from https://gitlab.com/embeddable-common-lisp/ecl.
 
 # note
 
+* v16.1.2
 * before build, apply patch ecl_win64.patch.
 * .lisp -> .c -> .exe succeed.
 * vs2015 x64 build.
