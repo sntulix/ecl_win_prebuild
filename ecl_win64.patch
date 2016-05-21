@@ -1,0 +1,130 @@
+diff -uprN ecl_org/msvc/Makefile ecl_modified/msvc/Makefile
+--- ecl_org/msvc/Makefile	Sun May 22 05:31:04 2016
++++ ecl_modified/msvc/Makefile	Sun May 22 06:38:29 2016
+@@ -18,7 +18,7 @@ SOFTWARE_VERSION  = 5.0
+ THEHOST           = win32
+ 
+ # Define to 1 to make a 64-bit build
+-# ECL_WIN64 =
++ECL_WIN64 = 1
+ 
+ # Define here the processor type to compile GMP library
+ # with maximum optimization. Possible values are:
+@@ -48,19 +48,19 @@ ECL_SSE =
+ # Add the extensions to include in the build process. Comment any
+ # of the following lines to remove a feature from the build process
+ # LISP->C compiled
+-ECL_CMP     =
++ECL_CMP     = 1
+ # ASDF support
+-ECL_ASDF    =
++ECL_ASDF    = 1
+ # TCP support
+-ECL_SOCKETS =
++ECL_SOCKETS = 1
+ # X Windows support
+ # ECL_CLX     = 1
+ # Regression Tests support
+-ECL_RT      =
++ECL_RT      = 1
+ # Defsystem support
+-ECL_DEFSYS  =
++ECL_DEFSYS  = 1
+ # Profiling
+-ECL_PROFILE =
++ECL_PROFILE = 1
+ 
+ # <END> (ECL configuration)
+ # =============================================================
+diff -uprN ecl_org/msvc/ecl/config.h.msvc6 ecl_modified/msvc/ecl/config.h.msvc6
+--- ecl_org/msvc/ecl/config.h.msvc6	Sun May 22 05:31:04 2016
++++ ecl_modified/msvc/ecl/config.h.msvc6	Sun May 22 05:35:33 2016
+@@ -417,17 +417,6 @@ typedef unsigned int uint32_t;
+ #  define	stack_align(n)	(((n) + 03) & ~03)
+ #endif
+ 
+-/* #undef FILE_CNT */
+-#if 0 == 1
+-#  define FILE_CNT(fp)	((fp)->_IO_read_end - (fp)->_IO_read_ptr)
+-#endif
+-#if 0 == 2
+-#  define FILE_CNT(fp)	((fp)->_r)
+-#endif
+-#if 3 == 3
+-#  define FILE_CNT(fp)	((fp)->_cnt)
+-#endif
+-
+ #if defined(cygwin) || defined(mingw32) || defined(_MSC_VER)
+ #  define IS_DIR_SEPARATOR(x) ((x=='/')||(x=='\\'))
+ #  define DIR_SEPARATOR		'/'
+diff -uprN ecl_org/src/c/dpp.c ecl_modified/src/c/dpp.c
+--- ecl_org/src/c/dpp.c	Sun May 22 05:31:08 2016
++++ ecl_modified/src/c/dpp.c	Sun May 22 05:36:26 2016
+@@ -90,7 +90,9 @@
+ #define FALSE           0
+ 
+ #ifndef __cplusplus
++#if __STDC_VERSION__ >= 199901L
+ typedef int bool;
++#endif
+ #endif
+ 
+ FILE *in, *out;
+diff -uprN ecl_org/src/c/file.d ecl_modified/src/c/file.d
+--- ecl_org/src/c/file.d	Sun May 22 05:31:08 2016
++++ ecl_modified/src/c/file.d	Sun May 22 05:34:25 2016
+@@ -4592,7 +4592,7 @@ ecl_unread_char(ecl_character c, cl_obje
+   stream_dispatch_table(strm)->unread_char(strm, c);
+ }
+ 
+-int
++bool
+ ecl_listen_stream(cl_object strm)
+ {
+   return stream_dispatch_table(strm)->listen(strm);
+@@ -4664,7 +4664,7 @@ ecl_stream_element_type(cl_object strm)
+   return stream_dispatch_table(strm)->element_type(strm);
+ }
+ 
+-int
++bool
+ ecl_interactive_stream_p(cl_object strm)
+ {
+   return stream_dispatch_table(strm)->interactive_p(strm);
+diff -uprN ecl_org/src/c/main.d ecl_modified/src/c/main.d
+--- ecl_org/src/c/main.d	Sun May 22 05:31:08 2016
++++ ecl_modified/src/c/main.d	Sun May 22 06:43:33 2016
+@@ -450,22 +450,6 @@ maybe_fix_console_stream(cl_object strea
+     int code;
+     const char *name;
+   } known_cp[] = {
+-    {874, "WINDOWS-CP874"},
+-    {932, "WINDOWS-CP932"},
+-    {936, "WINDOWS-CP936"},
+-    {949, "WINDOWS-CP949"},
+-    {950, "WINDOWS-CP950"},
+-    {1200, "WINDOWS-CP1200"},
+-    {1201, "WINDOWS-CP1201"},
+-    {1250, "WINDOWS-CP1250"},
+-    {1251, "WINDOWS-CP1251"},
+-    {1252, "WINDOWS-CP1252"},
+-    {1253, "WINDOWS-CP1253"},
+-    {1254, "WINDOWS-CP1254"},
+-    {1255, "WINDOWS-CP1255"},
+-    {1256, "WINDOWS-CP1256"},
+-    {1257, "WINDOWS-CP1257"},
+-    {1258, "WINDOWS-CP1258"},
+     {65001, "UTF8"},
+     {0,"LATIN-1"}
+   };
+diff -uprN ecl_org/src/c/read.d ecl_modified/src/c/read.d
+--- ecl_org/src/c/read.d	Sun May 22 05:31:09 2016
++++ ecl_modified/src/c/read.d	Sun May 22 05:33:01 2016
+@@ -1675,6 +1675,7 @@ do_read_delimited_list(int d, cl_object 
+     value0 = eof_value;
+     value1 = ECL_T;
+   } else {
++#define ECL_NEWLINE_IS_CRLF 1  
+ #ifdef ECL_NEWLINE_IS_CRLF      /* From \r\n, ignore \r */
+     if (TOKEN_STRING_FILLP(token) > 0 &&
+         TOKEN_STRING_CHAR_CMP(token,TOKEN_STRING_FILLP(token)-1,'\r'))
