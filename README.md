@@ -1,4 +1,4 @@
-# ecl win prebuild
+# ECL Win64 prebuild
 
 imported from https://gitlab.com/embeddable-common-lisp/ecl.
 
