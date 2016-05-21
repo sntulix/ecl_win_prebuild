@@ -1,16 +1,14 @@
-ECL stands for Embeddable Common-Lisp. The ECL project aims to
-produce an implementation of the Common-Lisp language which complies
-to the ANSI X3J13 definition of the language.
+# ecl win64 prebuild
 
-The term embeddable refers to the fact that ECL includes a Lisp to C
-compiler, which produces libraries (static or dynamic) that can be
-called from C programs. Furthermore, ECL can produce standalone
-executables from Lisp code and can itself be linked to your programs
-as a shared library. It also features an interpreter for situations
-when a C compiler isn't available.
+imported from https://gitlab.com/embeddable-common-lisp/ecl.
 
-ECL supports the operating systems Linux, FreeBSD, NetBSD, DragonFly
-BSD, OpenBSD, Solaris (at least v. 9), Microsoft Windows (MSVC, MinGW
-and Cygwin) and OSX, running on top of the Intel, Sparc, Alpha, ARM
-and PowerPC processors.  Porting to other architectures should be
-rather easy.
+# note
+
+* .lisp -> .c -> .exe succeed.
+* vs2015 x64 build.
+
+# references
+
+* http://stibear.hatenablog.com/entry/2016/03/21/220704
+* http://d.hatena.ne.jp/eel3/20150307/1425696483
+* https://gitlab.com/embeddable-common-lisp/ecl/issues/213
