@@ -4,10 +4,10 @@ imported from https://gitlab.com/embeddable-common-lisp/ecl.
 
 # note
 
-* v16.1.2
+* v16.1.2 (vs2015 x64 build).
 * before build, apply patch ecl_win64.patch.
 * .lisp -> .c -> .exe succeed.
-* vs2015 x64 build.
+* failed to load libssl32.dll and ssleay32.dll yet.
 
 # references
 
