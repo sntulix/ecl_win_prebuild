@@ -1,4 +1,6 @@
-# ECL win prebuild
+use https://github.com/sntulix/ecl_win64-prebuild
+
+# ECL win prebuild (deprecated)
 
 imported from https://gitlab.com/embeddable-common-lisp/ecl.
 
